@@ -6,7 +6,9 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
+  // withCredentials: true, // Disable for token-based auth
 });
 
 // Request interceptor to add token

@@ -82,6 +82,7 @@ class ParkingController extends Controller
         return response()->json([
             'transaction' => [
                 'id' => $transaction->id,
+                'qr_code' => $transaction->qr_code,
                 'ticket_number' => $transaction->ticket_number,
                 'license_plate' => $transaction->license_plate,
                 'vehicle_type' => $transaction->vehicle_type,

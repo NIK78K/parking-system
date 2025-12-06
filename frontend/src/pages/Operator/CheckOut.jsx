@@ -29,7 +29,13 @@ export default function CheckOut() {
 
     const html5QrcodeScanner = new Html5QrcodeScanner(
       "qr-reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
+      { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+        showTorchButtonIfSupported: true,
+        showZoomSliderIfSupported: true,
+      },
       false
     );
 
@@ -46,7 +52,15 @@ export default function CheckOut() {
   };
 
   const onScanError = (error) => {
-    // Ignore scan errors
+    // Ignore scan errors (happens continuously while scanning)
+    // Only log critical errors
+    if (error.includes('NotAllowedError') || error.includes('NotFoundError')) {
+      setError('Camera access denied or not available. Please use manual input.');
+      if (scanner) {
+        scanner.clear();
+        setScanning(false);
+      }
+    }
   };
 
   const stopScanner = () => {
@@ -80,7 +94,7 @@ export default function CheckOut() {
     setError(null);
 
     try {
-      const response = await parkingAPI.checkOut(transaction.id, paymentData);
+      const response = await parkingAPI.checkOut(transaction.qr_code, paymentData);
       alert(`Check-out successful!\nTotal Fee: Rp ${response.data.transaction.total_fee.toLocaleString()}`);
       setTransaction(null);
       setPaymentData({ payment_method: 'cash', notes: '' });
