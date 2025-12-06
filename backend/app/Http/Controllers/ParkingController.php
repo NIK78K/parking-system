@@ -169,7 +169,10 @@ class ParkingController extends Controller
             ->orderBy('entry_time', 'desc')
             ->get()
             ->map(function ($transaction) {
-                $duration = now()->diffInMinutes($transaction->entry_time);
+                $duration = (int) $transaction->entry_time->diffInMinutes(now());
+                $rate = ParkingRate::where('vehicle_type', $transaction->vehicle_type)->first();
+                $estimatedFee = $rate ? $rate->calculateFee($duration) : 0;
+                
                 return [
                     'id' => $transaction->id,
                     'ticket_number' => $transaction->ticket_number,
@@ -177,6 +180,7 @@ class ParkingController extends Controller
                     'vehicle_type' => $transaction->vehicle_type,
                     'entry_time' => $transaction->entry_time->format('Y-m-d H:i:s'),
                     'duration_minutes' => $duration,
+                    'estimated_fee' => $estimatedFee,
                     'operator_in' => $transaction->operatorIn->name,
                 ];
             });

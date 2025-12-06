@@ -8,6 +8,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
   // withCredentials: true, // Disable for token-based auth
 });
 

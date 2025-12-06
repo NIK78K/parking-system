@@ -16,6 +16,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Optimize font loading */
+@layer base {
+  html {
+    font-display: swap;
+  }
+}
+
+/* Optimize animations */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media print {
   body * {
     visibility: hidden;
