@@ -74,7 +74,7 @@ class ParkingController extends Controller
         }
 
         // Calculate duration and fee
-        $duration = now()->diffInMinutes($transaction->entry_time);
+        $duration = $transaction->entry_time->diffInMinutes(now());
         $rate = ParkingRate::where('vehicle_type', $transaction->vehicle_type)->first();
         
         $estimatedFee = $rate ? $rate->calculateFee($duration) : 0;
@@ -97,14 +97,15 @@ class ParkingController extends Controller
     /**
      * Check-out kendaraan (keluar parkir)
      */
-    public function checkOut(Request $request, $qrCode)
+    public function checkOut(Request $request)
     {
         $request->validate([
+            'qr_code' => 'required|string',
             'payment_method' => 'required|in:cash,qris,e-wallet,debit,credit',
             'notes' => 'nullable|string',
         ]);
 
-        $transaction = ParkingTransaction::where('qr_code', $qrCode)
+        $transaction = ParkingTransaction::where('qr_code', $request->qr_code)
             ->where('status', 'active')
             ->first();
 

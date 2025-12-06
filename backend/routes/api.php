@@ -32,7 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Parking Operations (Operator & Admin)
     Route::prefix('parking')->group(function () {
         Route::post('/check-in', [ParkingController::class, 'checkIn']);
-        Route::post('/check-out/{qrCode}', [ParkingController::class, 'checkOut']);
+        Route::post('/check-out', [ParkingController::class, 'checkOut']);
         Route::get('/active', [ParkingController::class, 'activeVehicles']);
         Route::get('/scan/{qrCode}', [ParkingController::class, 'scanQR']);
         Route::get('/history', [ParkingController::class, 'history']);

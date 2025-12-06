@@ -49,7 +49,7 @@ export const authAPI = {
 // Parking API
 export const parkingAPI = {
   checkIn: (data) => api.post('/parking/check-in', data),
-  checkOut: (qrCode, data) => api.post(`/parking/check-out/${qrCode}`, data),
+  checkOut: (qrCode, data) => api.post('/parking/check-out', { qr_code: qrCode, ...data }),
   scanQR: (qrCode) => api.get(`/parking/scan/${qrCode}`),
   getActive: () => api.get('/parking/active'),
   getHistory: (params) => api.get('/parking/history', { params }),
