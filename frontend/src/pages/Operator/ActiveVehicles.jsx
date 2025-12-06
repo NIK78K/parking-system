@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { parkingAPI } from '../../services/api';
 import Layout from '../../components/Layout';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function ActiveVehicles() {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all'); // all, car, motorcycle
+  const [showQR, setShowQR] = useState(null);
 
   useEffect(() => {
     fetchActiveVehicles();
@@ -23,6 +26,24 @@ export default function ActiveVehicles() {
     }
   };
 
+  const filteredVehicles = vehicles.filter(v => {
+    if (filter === 'all') return true;
+    return v.vehicle_type === filter;
+  });
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString('id-ID', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  const formatDuration = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -34,17 +55,43 @@ export default function ActiveVehicles() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Active Vehicles</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Active Vehicles</h1>
+
+        {/* Filter Tabs */}
+        <div className="flex space-x-2">
           <button
-            onClick={fetchActiveVehicles}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            onClick={() => setFilter('all')}
+            className={`px-6 py-2 rounded-lg font-medium ${
+              filter === 'all' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
-            🔄 Refresh
+            All
+          </button>
+          <button
+            onClick={() => setFilter('car')}
+            className={`px-6 py-2 rounded-lg font-medium ${
+              filter === 'car' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Cars
+          </button>
+          <button
+            onClick={() => setFilter('motorcycle')}
+            className={`px-6 py-2 rounded-lg font-medium ${
+              filter === 'motorcycle' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Motorcycles
           </button>
         </div>
 
-        {vehicles.length === 0 ? (
+        {filteredVehicles.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-12 text-center">
             <p className="text-gray-600 text-lg">No vehicles currently parked</p>
           </div>
@@ -54,13 +101,10 @@ export default function ActiveVehicles() {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Ticket #
+                    Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     License Plate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Entry Time
@@ -69,32 +113,42 @@ export default function ActiveVehicles() {
                     Duration
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Operator
+                    Current Fee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Action
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {vehicles.map((vehicle) => (
+                {filteredVehicles.map((vehicle) => (
                   <tr key={vehicle.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-sm">
-                      {vehicle.ticket_number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap font-mono text-sm font-bold">
-                      {vehicle.license_plate}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-2xl">
+                        {vehicle.vehicle_type === 'car' ? '🚗' : '🏍️'}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="capitalize">
-                        {vehicle.vehicle_type === 'car' ? '🚗 Car' : '🏍️ Motorcycle'}
+                      <div className="font-bold text-gray-900">{vehicle.license_plate}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {formatTime(vehicle.entry_time)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span className="text-blue-600 font-medium">
+                        {formatDuration(vehicle.duration_minutes)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {new Date(vehicle.entry_time).toLocaleString()}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      Rp {vehicle.estimated_fee?.toLocaleString('id-ID') || '5.000'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {Math.floor(vehicle.duration_minutes / 60)}h {vehicle.duration_minutes % 60}m
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {vehicle.operator_in}
+                      <button
+                        onClick={() => setShowQR(vehicle)}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        View QR
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -102,13 +156,31 @@ export default function ActiveVehicles() {
             </table>
           </div>
         )}
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>{vehicles.length}</strong> vehicle(s) currently parked • Auto-refresh every 30 seconds
-          </p>
-        </div>
       </div>
+
+      {/* QR Code Modal */}
+      {showQR && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold">QR Code</h3>
+              <button
+                onClick={() => setShowQR(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex flex-col items-center space-y-4">
+              <QRCodeSVG value={showQR.qr_code} size={200} />
+              <div className="text-center">
+                <p className="font-bold text-lg">{showQR.license_plate}</p>
+                <p className="text-sm text-gray-600">{showQR.ticket_number}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

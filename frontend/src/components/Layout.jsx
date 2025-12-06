@@ -31,26 +31,30 @@ export default function Layout({ children }) {
                   Dashboard
                 </Link>
                 
-                <Link
-                  to="/check-in"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Check-In
-                </Link>
-                
-                <Link
-                  to="/check-out"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Check-Out
-                </Link>
-                
-                <Link
-                  to="/active"
-                  className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Active Vehicles
-                </Link>
+                {!isAdmin && (
+                  <>
+                    <Link
+                      to="/check-in"
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Check-In
+                    </Link>
+                    
+                    <Link
+                      to="/check-out"
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Check-Out
+                    </Link>
+                    
+                    <Link
+                      to="/active"
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Active Vehicles
+                    </Link>
+                  </>
+                )}
 
                 {isAdmin && (
                   <>

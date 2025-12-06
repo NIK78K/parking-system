@@ -32,6 +32,27 @@ class DashboardController extends Controller
             ->whereMonth('report_date', $today->month)
             ->sum('total_revenue');
 
+        // Recent activity (last 5 active vehicles)
+        $recentActivity = ParkingTransaction::where('status', 'active')
+            ->with('operatorIn')
+            ->orderBy('entry_time', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($transaction) {
+                $duration = $transaction->entry_time->diffInMinutes(now());
+                return [
+                    'id' => $transaction->id,
+                    'license_plate' => $transaction->license_plate,
+                    'vehicle_type' => $transaction->vehicle_type,
+                    'entry_time' => $transaction->entry_time->format('H:i'),
+                    'duration_minutes' => $duration,
+                ];
+            });
+
+        // Available slots (example: total 100 slots)
+        $totalSlots = 100;
+        $availableSlots = $totalSlots - $activeVehicles;
+
         return response()->json([
             'active_vehicles' => [
                 'total' => $activeVehicles,
@@ -43,6 +64,9 @@ class DashboardController extends Controller
                 'vehicles' => $todayVehicles,
             ],
             'monthly_revenue' => $monthlyRevenue,
+            'recent_activity' => $recentActivity,
+            'available_slots' => $availableSlots,
+            'total_slots' => $totalSlots,
         ]);
     }
 }

@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import CheckIn from './pages/Operator/CheckIn';
 import CheckOut from './pages/Operator/CheckOut';
 import ActiveVehicles from './pages/Operator/ActiveVehicles';
+import Settings from './pages/Admin/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -34,6 +35,12 @@ function App() {
         <Route path="/active" element={
           <ProtectedRoute>
             <ActiveVehicles />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/rates" element={
+          <ProtectedRoute>
+            <Settings />
           </ProtectedRoute>
         } />
         
