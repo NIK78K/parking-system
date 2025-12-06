@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import { parkingAPI } from '../../services/api';
 import Layout from '../../components/Layout';
 
@@ -9,6 +9,7 @@ export default function CheckOut() {
   const [transaction, setTransaction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [scanError, setScanError] = useState(null);
   const [manualQR, setManualQR] = useState('');
   const [paymentData, setPaymentData] = useState({
     payment_method: 'cash',
@@ -17,57 +18,76 @@ export default function CheckOut() {
 
   useEffect(() => {
     return () => {
-      if (scanner) {
-        scanner.clear();
+      if (scanner && scanner.isScanning) {
+        scanner.stop().catch(err => console.error('Cleanup error:', err));
       }
     };
   }, [scanner]);
 
-  const startScanner = () => {
+  const startScanner = async () => {
     setScanning(true);
     setError(null);
+    setScanError(null);
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "qr-reader",
-      { 
+    try {
+      // Request camera permission first
+      const devices = await Html5Qrcode.getCameras();
+      
+      if (!devices || devices.length === 0) {
+        setScanError('No camera found on this device.');
+        setScanning(false);
+        return;
+      }
+
+      const html5QrCode = new Html5Qrcode("qr-reader");
+      
+      const config = { 
         fps: 10, 
         qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0,
-        showTorchButtonIfSupported: true,
-        showZoomSliderIfSupported: true,
-      },
-      false
-    );
+      };
 
-    html5QrcodeScanner.render(onScanSuccess, onScanError);
-    setScanner(html5QrcodeScanner);
-  };
-
-  const onScanSuccess = async (decodedText) => {
-    if (scanner) {
-      scanner.clear();
+      // Use first available camera
+      await html5QrCode.start(
+        devices[0].id,
+        config,
+        async (decodedText) => {
+          // Success callback
+          try {
+            if (html5QrCode.isScanning) {
+              await html5QrCode.stop();
+            }
+            setScanning(false);
+            setScanner(null);
+            await fetchTransaction(decodedText);
+          } catch (err) {
+            console.error('Error in success callback:', err);
+          }
+        },
+        (errorMessage) => {
+          // Error callback - ignore continuous scan errors
+        }
+      );
+      
+      setScanner(html5QrCode);
+    } catch (err) {
+      console.error('Scanner error:', err);
+      setScanError('Failed to start camera: ' + err.message);
       setScanning(false);
     }
-    await fetchTransaction(decodedText);
   };
 
-  const onScanError = (error) => {
-    // Ignore scan errors (happens continuously while scanning)
-    // Only log critical errors
-    if (error.includes('NotAllowedError') || error.includes('NotFoundError')) {
-      setError('Camera access denied or not available. Please use manual input.');
-      if (scanner) {
-        scanner.clear();
-        setScanning(false);
+  const stopScanner = async () => {
+    if (scanner) {
+      try {
+        if (scanner.isScanning) {
+          await scanner.stop();
+        }
+        setScanner(null);
+      } catch (err) {
+        console.error('Error stopping scanner:', err);
       }
     }
-  };
-
-  const stopScanner = () => {
-    if (scanner) {
-      scanner.clear();
-      setScanning(false);
-    }
+    setScanning(false);
   };
 
   const fetchTransaction = async (qrCode) => {
@@ -123,19 +143,30 @@ export default function CheckOut() {
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold mb-4">Scan QR Code</h2>
               
+              {scanError && (
+                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4 text-sm">
+                  {scanError}
+                </div>
+              )}
+              
               {!scanning ? (
-                <button
-                  onClick={startScanner}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium"
-                >
-                  Start Camera Scanner
-                </button>
+                <div>
+                  <button
+                    onClick={startScanner}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium"
+                  >
+                    📷 Start Camera Scanner
+                  </button>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Allow camera permission when prompted
+                  </p>
+                </div>
               ) : (
                 <>
-                  <div id="qr-reader" className="mb-4"></div>
+                  <div id="qr-reader" style={{ width: '100%' }}></div>
                   <button
                     onClick={stopScanner}
-                    className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700"
+                    className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 mt-4"
                   >
                     Stop Scanner
                   </button>

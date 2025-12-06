@@ -83,6 +83,21 @@ export default function CheckIn() {
                   <span className="font-medium">Entry Time:</span>
                   <span>{new Date(transaction.entry_time).toLocaleString()}</span>
                 </div>
+                <div className="py-3 border-t-2 border-gray-300 mt-4">
+                  <span className="font-medium block mb-2">QR Code (for manual input):</span>
+                  <div className="bg-gray-50 p-3 rounded border border-gray-200">
+                    <code className="text-xs break-all">{transaction.qr_code}</code>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(transaction.qr_code);
+                      alert('QR code copied to clipboard!');
+                    }}
+                    className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    📋 Copy QR Code
+                  </button>
+                </div>
               </div>
 
               {/* Actions */}
