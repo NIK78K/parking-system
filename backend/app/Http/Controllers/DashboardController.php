@@ -39,7 +39,7 @@ class DashboardController extends Controller
             ->limit(5)
             ->get()
             ->map(function ($transaction) {
-                $duration = $transaction->entry_time->diffInMinutes(now());
+                $duration = (int) $transaction->entry_time->diffInMinutes(now());
                 return [
                     'id' => $transaction->id,
                     'license_plate' => $transaction->license_plate,

@@ -74,7 +74,7 @@ class ParkingController extends Controller
         }
 
         // Calculate duration and fee
-        $duration = $transaction->entry_time->diffInMinutes(now());
+        $duration = (int) $transaction->entry_time->diffInMinutes(now());
         $rate = ParkingRate::where('vehicle_type', $transaction->vehicle_type)->first();
         
         $estimatedFee = $rate ? $rate->calculateFee($duration) : 0;
@@ -117,7 +117,7 @@ class ParkingController extends Controller
 
         // Calculate duration and fee
         $exitTime = now();
-        $duration = $exitTime->diffInMinutes($transaction->entry_time);
+        $duration = (int) $exitTime->diffInMinutes($transaction->entry_time);
         
         $rate = ParkingRate::where('vehicle_type', $transaction->vehicle_type)->first();
         
